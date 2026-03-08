@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+keys/
+claves_prueba/
+codificado/
+decodificado/
+prueba
+venv
+.venv
