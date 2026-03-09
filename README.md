@@ -44,6 +44,30 @@ python3 key_manager.py --name cliente_a --key-size 4096
 python3 key_manager.py --name cliente_b --password mi_password
 ```
 
+## Ejecutables y releases
+
+Build local:
+
+```bash
+pip install -r requirements.txt
+pip install pyinstaller
+./build_linux.sh
+```
+
+En Windows:
+
+```powershell
+pip install -r requirements.txt
+pip install pyinstaller
+.\build_windows.ps1
+```
+
+GitHub Actions:
+
+- el workflow está en `.github/workflows/release-zips-on-tag.yml`
+- se ejecuta al pushear un tag con formato `YYYYMMDD` o `YYYYMMDD_HHMMSS`
+- genera ZIPs para Linux y Windows con el ejecutable, `bin/` y `README.md`
+
 ## Formato de trabajo
 
 1. La app crea un ZIP temporal del archivo o carpeta elegidos.

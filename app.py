@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 import struct
+import sys
 import tempfile
 import threading
 import zipfile
@@ -41,6 +42,23 @@ def ensure_unique_path(path: Path) -> Path:
         candidate = path.with_name(f"{path.stem}_{counter}{path.suffix}")
         counter += 1
     return candidate
+
+
+def resource_path(*relative_parts: str) -> Path:
+    candidates: list[Path] = []
+    meipass = getattr(sys, "_MEIPASS", None)
+    if meipass:
+        candidates.append(Path(meipass))
+    if getattr(sys, "frozen", False):
+        candidates.append(Path(sys.executable).resolve().parent)
+    candidates.append(Path(__file__).resolve().parent)
+
+    for base_path in candidates:
+        candidate = base_path.joinpath(*relative_parts)
+        if candidate.exists():
+            return candidate
+
+    return candidates[0].joinpath(*relative_parts)
 
 
 def zip_folder(source_dir: Path, zip_path: Path) -> None:
@@ -203,6 +221,8 @@ class SecureEncrypterApp:
         self.root.geometry("1120x760")
         self.root.minsize(1020, 720)
         self.root.configure(background=BG)
+        self.icon_image = None
+        self.logo_image = None
 
         self.status_var = tk.StringVar(value="Listo para comprimir, cifrar o descifrar.")
         self.encrypt_source_mode = tk.StringVar(value="folder")
@@ -227,7 +247,32 @@ class SecureEncrypterApp:
         self.progress = None
 
         self.configure_styles()
+        self.apply_window_branding()
         self.build_ui()
+
+    def apply_window_branding(self) -> None:
+        icon_ico_path = resource_path("bin", "ABP-blanco-en-fondo-negro.ico")
+        icon_png_path = resource_path("bin", "ABP blanco sin fondo.png")
+        logo_path = resource_path("bin", "MrBot.png")
+
+        try:
+            if icon_ico_path.exists():
+                self.root.iconbitmap(str(icon_ico_path))
+        except Exception:
+            pass
+
+        try:
+            if icon_png_path.exists():
+                self.icon_image = tk.PhotoImage(file=str(icon_png_path))
+                self.root.iconphoto(True, self.icon_image)
+        except Exception:
+            self.icon_image = None
+
+        try:
+            if logo_path.exists():
+                self.logo_image = tk.PhotoImage(file=str(logo_path))
+        except Exception:
+            self.logo_image = None
 
     def configure_styles(self) -> None:
         style = ttk.Style(self.root)
@@ -287,6 +332,8 @@ class SecureEncrypterApp:
 
         header = ttk.Frame(container, padding=(10, 10, 10, 4))
         header.pack(fill="x")
+        if self.logo_image is not None:
+            tk.Label(header, image=self.logo_image, background=BG).pack(anchor="center", pady=(0, 8))
         ttk.Label(header, text=APP_TITLE, style="Title.TLabel").pack(anchor="center")
         ttk.Label(
             header,

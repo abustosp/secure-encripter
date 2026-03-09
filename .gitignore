@@ -4,6 +4,8 @@ keys/
 claves_prueba/
 codificado/
 decodificado/
+Ejecutable/
+temp_build/
 prueba
 venv
 .venv
