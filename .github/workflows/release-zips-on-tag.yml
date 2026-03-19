@@ -6,6 +6,7 @@ on:
       - "*"
 
 permissions:
+  actions: write
   contents: write
 
 jobs:
@@ -28,6 +29,8 @@ jobs:
     name: Build Linux ZIP
     needs: validate-tag
     runs-on: ubuntu-latest
+    outputs:
+      artifact_id: ${{ steps.upload-linux-artifact.outputs.artifact-id }}
     env:
       APP_VERSION: ${{ needs.validate-tag.outputs.version }}
     steps:
@@ -78,6 +81,7 @@ jobs:
           )
 
       - name: Upload Linux ZIP artifact
+        id: upload-linux-artifact
         uses: actions/upload-artifact@v4
         with:
           name: linux-zip
@@ -88,6 +92,8 @@ jobs:
     name: Build Windows ZIP
     needs: validate-tag
     runs-on: windows-latest
+    outputs:
+      artifact_id: ${{ steps.upload-windows-artifact.outputs.artifact-id }}
     env:
       APP_VERSION: ${{ needs.validate-tag.outputs.version }}
     steps:
@@ -152,6 +158,7 @@ jobs:
           Compress-Archive -Path $itemsToZip -DestinationPath $destZip -Force
 
       - name: Upload Windows ZIP artifact
+        id: upload-windows-artifact
         uses: actions/upload-artifact@v4
         with:
           name: windows-zip
@@ -179,3 +186,17 @@ jobs:
           fail_on_unmatched_files: true
           files: |
             release-assets/**/*.zip
+
+      - name: Delete workflow artifacts
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          LINUX_ARTIFACT_ID: ${{ needs.build-linux.outputs.artifact_id }}
+          WINDOWS_ARTIFACT_ID: ${{ needs.build-windows.outputs.artifact_id }}
+        run: |
+          for artifact_id in "$LINUX_ARTIFACT_ID" "$WINDOWS_ARTIFACT_ID"; do
+            gh api \
+              --method DELETE \
+              -H "Accept: application/vnd.github+json" \
+              "/repos/$REPOSITORY/actions/artifacts/$artifact_id"
+          done
